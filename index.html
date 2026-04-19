@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Layza — The endorsement graph for books</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #faf8f4;
+      --surface: #ffffff;
+      --border: #e8e2d9;
+      --border-strong: #c8bfb0;
+      --text: #1a1714;
+      --text-muted: #6b6460;
+      --text-faint: #9e9890;
+      --amber: #BA7517;
+      --amber-light: #fdf3e3;
+      --green: #2d6a2d;
+      --green-light: #eaf3ea;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .app { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── Header ── */
+    .header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; letter-spacing: -0.5px; color: var(--text); }
+    .logo em { font-style: italic; font-weight: 400; }
+    .tagline { font-size: 12px; color: var(--text-faint); letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px; }
+    .connected-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--green-light); color: var(--green); border: 1px solid #97c459; display: none; }
+    .connected-badge.visible { display: inline-block; }
+
+    /* ── Config banner ── */
+    .config-banner { background: var(--amber-light); border: 1px solid var(--amber); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+    .config-banner h3 { font-size: 13px; font-weight: 500; color: var(--amber); margin-bottom: 12px; }
+    .config-banner input { width: 100%; padding: 9px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: #fff; color: var(--text); margin-bottom: 8px; }
+    .config-banner input:focus { outline: none; border-color: var(--amber); }
+    .config-btn { padding: 9px 20px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border: none; border-radius: var(--radius-sm); background: var(--text); color: #fff; cursor: pointer; }
+    .config-btn:hover { opacity: 0.85; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+    .tab { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 10px 22px; border: none; background: none; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Upload grid ── */
+    .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1rem; }
+    .upload-zone { border: 1.5px dashed var(--border-strong); border-radius: var(--radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; position: relative; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; background: var(--surface); }
+    .upload-zone:hover { border-color: var(--amber); background: var(--amber-light); }
+    .upload-zone.has-image { border-style: solid; border-color: var(--amber); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-zone-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-faint); font-weight: 500; }
+    .upload-zone-title { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--text-muted); }
+    .upload-zone-sub { font-size: 12px; color: var(--text-faint); }
+    .upload-preview { width: 100%; max-height: 160px; object-fit: contain; border-radius: var(--radius-sm); display: none; }
+    .upload-preview.visible { display: block; }
+    .upload-tick { position: absolute; top: 10px; right: 12px; color: var(--amber); font-size: 16px; }
+
+    /* ── Manual title ── */
+    .manual-row { display: none; margin-bottom: 1rem; }
+    .manual-row.visible { display: block; }
+    .manual-row label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+    .manual-row input { width: 100%; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+    .manual-row input:focus { outline: none; border-color: var(--amber); }
+
+    /* ── Buttons ── */
+    .extract-btn { width: 100%; padding: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; border: none; border-radius: var(--radius); background: var(--text); color: #fff; cursor: pointer; transition: opacity 0.2s; opacity: 0.3; pointer-events: none; margin-top: 1rem; }
+    .extract-btn.ready { opacity: 1; pointer-events: all; }
+    .extract-btn:hover { opacity: 0.85; }
+    .save-btn { padding: 10px 24px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--text); color: #fff; cursor: pointer; }
+    .save-btn:hover { opacity: 0.85; }
+    .search-btn { padding: 10px 24px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--text); color: #fff; cursor: pointer; }
+
+    /* ── Status ── */
+    .status { margin-top: 1rem; font-size: 13px; color: var(--text-muted); text-align: center; min-height: 22px; }
+    .hint { font-size: 12px; color: var(--text-faint); text-align: center; }
+    .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--border-strong); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 5px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results ── */
+    .book-info-bar { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin: 1.5rem 0 1.25rem; display: flex; gap: 24px; flex-wrap: wrap; }
+    .info-item { display: flex; flex-direction: column; gap: 2px; }
+    .info-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-faint); }
+    .info-value { font-size: 14px; font-weight: 500; }
+    .info-value[contenteditable] { border-bottom: 1px dashed var(--border-strong); outline: none; cursor: text; min-width: 100px; }
+
+    .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-faint); font-weight: 500; margin-bottom: 12px; }
+
+    .blurb-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--amber); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 10px; }
+    .blurb-quote { font-family: 'Playfair Display', serif; font-style: italic; font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 10px; }
+    .blurb-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .blurb-role { font-size: 12px; color: var(--text-muted); }
+
+    .save-bar { margin-top: 1.5rem; display: flex; align-items: center; gap: 12px; }
+    .save-note { font-size: 12px; color: var(--text-faint); }
+
+    .warning-bar { font-size: 12px; color: var(--amber); margin-bottom: 1rem; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--amber); background: var(--amber-light); }
+
+    /* ── Search ── */
+    .search-row { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+    .search-row input { flex: 1; padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+    .search-row input:focus { outline: none; border-color: var(--amber); }
+
+    .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 12px; }
+    .result-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+    .result-author { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+    .result-blurb { font-family: 'Playfair Display', serif; font-style: italic; font-size: 13px; line-height: 1.6; color: var(--text-muted); padding: 10px 14px; border-left: 2px solid var(--amber); background: var(--bg); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+    /* ── Browse ── */
+    .endorser-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 12px; }
+    .endorser-name { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; }
+    .badge { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); margin-left: 8px; vertical-align: middle; }
+    .endorser-book { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+    .endorser-book strong { color: var(--text); font-weight: 500; }
+
+    .db-count { font-size: 12px; color: var(--text-faint); margin-bottom: 1.5rem; }
+
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 3rem 1rem; }
+    .empty-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--text-muted); margin-bottom: 8px; }
+    .empty-sub { font-size: 13px; color: var(--text-faint); }
+
+    @media (max-width: 500px) {
+      .upload-grid { grid-template-columns: 1fr; }
+      .tabs { overflow-x: auto; }
+      .tab { white-space: nowrap; padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div>
+      <div class="logo">Lay<em>za</em></div>
+      <div class="tagline">The endorsement graph for books</div>
+    </div>
+    <span class="connected-badge" id="connectedBadge">connected</span>
+  </div>
+
+  <div class="config-banner" id="configBanner">
+    <h3>Connect your database</h3>
+    <input id="cfgUrl" placeholder="Project URL — https://xxxxxxxxxx.supabase.co" />
+    <input id="cfgKey" placeholder="Publishable key — sb_publishable_..." />
+    <button class="config-btn" onclick="saveConfig()">Connect</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('extract')">Extract blurbs</button>
+    <button class="tab" onclick="switchTab('search')">Search endorsers</button>
+    <button class="tab" onclick="switchTab('browse')">Browse vault</button>
+  </div>
+
+  <!-- EXTRACT -->
+  <div class="panel active" id="tab-extract">
+    <div class="upload-grid">
+      <div class="upload-zone" id="frontZone">
+        <input type="file" accept="image/*" onchange="handleFile(event,'front')" />
+        <div class="upload-zone-label">Front cover</div>
+        <img class="upload-preview" id="frontPreview" />
+        <div id="frontPlaceholder">
+          <div class="upload-zone-title">Front cover</div>
+          <div class="upload-zone-sub">Title &amp; author</div>
+        </div>
+      </div>
+      <div class="upload-zone" id="backZone">
+        <input type="file" accept="image/*" onchange="handleFile(event,'back')" />
+        <div class="upload-zone-label">Back cover</div>
+        <img class="upload-preview" id="backPreview" />
+        <div id="backPlaceholder">
+          <div class="upload-zone-title">Back cover</div>
+          <div class="upload-zone-sub">Blurbs &amp; quotes</div>
+        </div>
+      </div>
+    </div>
+    <div class="hint">Upload both covers for best results — back cover alone works too</div>
+    <div class="manual-row" id="manualRow">
+      <label>Title not on the cover? Enter it manually</label>
+      <input type="text" id="manualTitle" placeholder="Book title" />
+    </div>
+    <button class="extract-btn" id="extractBtn" onclick="extractBlurbs()">Extract blurbs with AI</button>
+    <div class="status" id="statusBar"></div>
+    <div id="extractResults"></div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="panel" id="tab-search">
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="Search by endorser name, e.g. James Patterson" onkeydown="if(event.key==='Enter')runSearch()" />
+      <button class="search-btn" onclick="runSearch()">Search</button>
+    </div>
+    <div id="searchResults"></div>
+  </div>
+
+  <!-- BROWSE -->
+  <div class="panel" id="tab-browse">
+    <div id="browseContent"></div>
+  </div>
+
+</div>
+
+<script>
+  let SUPABASE_URL = '';
+  let SUPABASE_KEY = '';
+  let uploads = { front: null, back: null };
+  let pendingParsed = null;
+
+  function saveConfig() {
+    SUPABASE_URL = document.getElementById('cfgUrl').value.trim().replace(/\/$/, '');
+    SUPABASE_KEY = document.getElementById('cfgKey').value.trim();
+    if (!SUPABASE_URL || !SUPABASE_KEY) return;
+    document.getElementById('configBanner').style.display = 'none';
+    document.getElementById('connectedBadge').classList.add('visible');
+  }
+
+  async function sbFetch(path, options = {}) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      ...options,
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': options.prefer || 'return=representation',
+        ...(options.headers || {})
+      }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const text = await res.text();
+    return text ? JSON.parse(text) : [];
+  }
+
+  function handleFile(e, side) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      uploads[side] = { base64: ev.target.result.split(',')[1], mediaType: file.type };
+      const preview = document.getElementById(side + 'Preview');
+      const placeholder = document.getElementById(side + 'Placeholder');
+      const zone = document.getElementById(side + 'Zone');
+      preview.src = ev.target.result;
+      preview.classList.add('visible');
+      placeholder.style.display = 'none';
+      zone.classList.add('has-image');
+      if (!zone.querySelector('.upload-tick')) {
+        const tick = document.createElement('span');
+        tick.className = 'upload-tick';
+        tick.textContent = '✓';
+        zone.appendChild(tick);
+      }
+      updateReadyState();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function updateReadyState() {
+    const hasAny = uploads.front || uploads.back;
+    document.getElementById('extractBtn').classList.toggle('ready', !!hasAny);
+    document.getElementById('manualRow').classList.toggle('visible', !!(uploads.back && !uploads.front));
+    const s = document.getElementById('statusBar');
+    if (uploads.front && uploads.back) s.textContent = 'Both covers ready';
+    else if (uploads.front) s.textContent = 'Front cover loaded — add back cover for blurbs';
+    else if (uploads.back) s.textContent = 'Back cover loaded — add front cover or enter title manually';
+  }
+
+  async function extractBlurbs() {
+    if (!uploads.front && !uploads.back) return;
+    const btn = document.getElementById('extractBtn');
+    const status = document.getElementById('statusBar');
+    btn.disabled = true;
+    status.innerHTML = '<span class="spinner"></span>AI is reading the covers...';
+
+    const manualTitle = document.getElementById('manualTitle').value.trim();
+    const blocks = [];
+
+    if (uploads.front) {
+      blocks.push({ type: "text", text: "IMAGE 1 — Front cover:" });
+      blocks.push({ type: "image", source: { type: "base64", media_type: uploads.front.mediaType, data: uploads.front.base64 }});
+    }
+    if (uploads.back) {
+      blocks.push({ type: "text", text: uploads.front ? "IMAGE 2 — Back cover:" : "IMAGE 1 — Back cover only:" });
+      blocks.push({ type: "image", source: { type: "base64", media_type: uploads.back.mediaType, data: uploads.back.base64 }});
+    }
+
+    let prompt = `Analyse the provided book cover image(s) and extract all blurb endorsements.`;
+    if (uploads.front && uploads.back) prompt += ` First image is the front cover (title and author). Second image is the back cover (blurb quotes).`;
+    else if (uploads.back && !uploads.front) {
+      prompt += ` Only the back cover is provided.`;
+      prompt += manualTitle ? ` Book title provided manually: "${manualTitle}".` : ` Book title unknown — leave bookTitle empty.`;
+    } else {
+      prompt += ` Only the front cover is provided. Extract title, author, and any visible blurbs.`;
+    }
+    prompt += `\n\nRespond ONLY with JSON, no preamble, no markdown:\n{"bookTitle":"...","bookAuthor":"...","blurbs":[{"quote":"...","endorser":"...","role":"..."}]}`;
+    blocks.push({ type: "text", text: prompt });
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: blocks }] })
+      });
+      const data = await res.json();
+      const parsed = JSON.parse(data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim());
+      if (manualTitle && !parsed.bookTitle) parsed.bookTitle = manualTitle;
+      pendingParsed = parsed;
+      renderExtractResults(parsed);
+      status.textContent = parsed.blurbs.length > 0 ? `Found ${parsed.blurbs.length} blurb${parsed.blurbs.length !== 1 ? 's' : ''}` : 'No blurbs detected';
+    } catch(err) {
+      status.textContent = 'Extraction failed — please try again';
+      console.error(err);
+    }
+    btn.disabled = false;
+  }
+
+  function renderExtractResults(data) {
+    const el = document.getElementById('extractResults');
+    if (!data.blurbs || data.blurbs.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-title">No blurbs found</div><div class="empty-sub">Try uploading the back cover, or a cover with visible quote endorsements</div></div>';
+      return;
+    }
+    const titleMissing = !data.bookTitle;
+    let html = '';
+    html += `<div class="book-info-bar">`;
+    html += `<div class="info-item"><span class="info-label">Title</span><span class="info-value" contenteditable="true" id="editableTitle">${esc(data.bookTitle || 'Unknown — click to edit')}</span></div>`;
+    if (data.bookAuthor) html += `<div class="info-item"><span class="info-label">Author</span><span class="info-value">${esc(data.bookAuthor)}</span></div>`;
+    html += `<div class="info-item"><span class="info-label">Blurbs found</span><span class="info-value">${data.blurbs.length}</span></div>`;
+    html += '</div>';
+    if (titleMissing) html += `<div class="warning-bar">Title not detected — click the title above to edit it before saving</div>`;
+    html += `<div class="section-label">Extracted endorsements</div>`;
+    data.blurbs.forEach(b => {
+      html += `<div class="blurb-card"><div class="blurb-quote">"${esc(b.quote)}"</div><div style="display:flex;align-items:center;gap:8px;"><span class="blurb-name">${esc(b.endorser)}</span>${b.role ? `<span class="blurb-role">— ${esc(b.role)}</span>` : ''}</div></div>`;
+    });
+    html += `<div class="save-bar"><button class="save-btn" onclick="saveEntry()">Save to vault</button><span class="save-note" id="saveNote">${SUPABASE_URL ? 'Saves to your live database' : 'Connect database above to persist data'}</span></div>`;
+    el.innerHTML = html;
+  }
+
+  async function saveEntry() {
+    if (!pendingParsed) return;
+    if (!SUPABASE_URL || !SUPABASE_KEY) { document.getElementById('saveNote').textContent = 'Please connect your database first'; return; }
+    const titleEl = document.getElementById('editableTitle');
+    const finalTitle = titleEl ? titleEl.innerText.trim() : pendingParsed.bookTitle;
+    const saveBtn = document.querySelector('.save-btn');
+    const saveNote = document.getElementById('saveNote');
+    saveBtn.disabled = true;
+    saveNote.innerHTML = '<span class="spinner"></span>Saving...';
+    try {
+      const books = await sbFetch('books?select=id,title', { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
+      let bookId;
+      const existing = books.find(b => b.title.toLowerCase() === finalTitle.toLowerCase());
+      if (existing) {
+        bookId = existing.id;
+      } else {
+        const created = await sbFetch('books', { method: 'POST', body: JSON.stringify({ title: finalTitle, author: pendingParsed.bookAuthor }), prefer: 'return=representation' });
+        bookId = created[0].id;
+      }
+      for (const blurb of pendingParsed.blurbs) {
+        const endorsers = await sbFetch(`endorsers?name=eq.${encodeURIComponent(blurb.endorser)}&select=id`, { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
+        let endorserId;
+        if (endorsers.length > 0) {
+          endorserId = endorsers[0].id;
+        } else {
+          const created = await sbFetch('endorsers', { method: 'POST', body: JSON.stringify({ name: blurb.endorser, role: blurb.role || '' }), prefer: 'return=representation' });
+          endorserId = created[0].id;
+        }
+        await sbFetch('blurbs', { method: 'POST', body: JSON.stringify({ book_id: bookId, endorser_id: endorserId, quote: blurb.quote }), prefer: 'return=minimal' });
+      }
+      document.querySelector('.save-bar').innerHTML = `<span style="font-size:13px;color:var(--text-muted);">Saved to vault successfully</span>`;
+    } catch(err) {
+      saveNote.textContent = 'Save failed — check your connection';
+      saveBtn.disabled = false;
+      console.error(err);
+    }
+  }
+
+  async function runSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    const el = document.getElementById('searchResults');
+    if (!query) { el.innerHTML = ''; return; }
+    if (!SUPABASE_URL || !SUPABASE_KEY) { el.innerHTML = '<div class="empty"><div class="empty-title">Database not connected</div><div class="empty-sub">Enter your Supabase credentials above</div></div>'; return; }
+    el.innerHTML = '<div class="status"><span class="spinner"></span>Searching...</div>';
+    try {
+      const endorsers = await sbFetch(`endorsers?name=ilike.*${encodeURIComponent(query)}*&select=id,name,role`, { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
+      if (endorsers.length === 0) { el.innerHTML = `<div class="empty"><div class="empty-title">No results for "${esc(query)}"</div><div class="empty-sub">Try uploading more covers to grow the vault</div></div>`; return; }
+      const results = [];
+      for (const endorser of endorsers) {
+        const blurbs = await sbFetch(`blurbs?endorser_id=eq.${endorser.id}&select=quote,book_id`, { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
+        for (const blurb of blurbs) {
+          const bks = await sbFetch(`books?id=eq.${blurb.book_id}&select=title,author`, { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
+          if (bks.length > 0) results.push({ endorser, blurb, book: bks[0] });
+        }
+      }
+      if (results.length === 0) { el.innerHTML = `<div class="empty"><div class="empty-title">No results for "${esc(query)}"</div></div>`; return; }
+      let html = `<div class="db-count">${results.length} endorsement${results.length !== 1 ? 's' : ''} found</div>`;
+      results.forEach(r => {
+        html += `<div class="result-card"><div class="result-title">${esc(r.book.title)}</div><div class="result-author">by ${esc(r.book.author)}</div><div class="result-blurb">"${esc(r.blurb.quote)}" <span style="font-style:normal;font-size:12px;">— ${esc(r.endorser.name)}</span></div></div>`;
+      });
+      el.innerHTML = html;
+    } catch(err) {
+      el.innerHTML = '<div class="empty"><div class="empty-title">Search failed</div><div class="empty-sub">Check your database connection</div></div>';
+      console.error(err);
+    }
+  }
+
+  async function renderBrowse() {
+    const el = document.getElementById('browseContent');
+    if (!SUPABASE_URL || !SUPABASE_KEY) { el.innerHTML = '<div class="empty"><div class="empty-title">Database not connected</div><div class="empty-sub">Enter your Supabase credentials to browse the vault</div></div>'; return; }
+    el.innerHTML = '<div class="status"><span class="spinner"></span>Loading vault...</div>';
+    try {
+      const blurbs = await sbFetch('blurbs?select=quote,book_id,endorser_id', { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
+      const books = await sbFetch('books?select=id,title,author', { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
+      const endorsers = await sbFetch('endorsers?select=id,name,role', { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
+      if (books.length === 0) { el.innerHTML = '<div class="empty"><div class="empty-title">Vault is empty</div><div class="empty-sub">Upload book covers to start building your database</div></div>'; return; }
+      const bookMap = {}, endorserMap = {}, byEndorser = {};
+      books.forEach(b => bookMap[b.id] = b);
+      endorsers.forEach(e => endorserMap[e.id] = e);
+      blurbs.forEach(bl => {
+        const e = endorserMap[bl.endorser_id], b = bookMap[bl.book_id];
+        if (!e || !b) return;
+        if (!byEndorser[e.name]) byEndorser[e.name] = [];
+        byEndorser[e.name].push({ book: b, blurb: bl });
+      });
+      let html = `<div class="db-count">${books.length} book${books.length !== 1 ? 's' : ''} · ${endorsers.length} endorser${endorsers.length !== 1 ? 's' : ''} in vault</div>`;
+      Object.keys(byEndorser).sort().forEach(name => {
+        const items = byEndorser[name];
+        html += `<div class="endorser-card"><div style="display:flex;align-items:center;"><span class="endorser-name">${esc(name)}</span><span class="badge">${items.length} endorsement${items.length !== 1 ? 's' : ''}</span></div>`;
+        items.forEach(i => { html += `<div class="endorser-book"><strong>${esc(i.book.title)}</strong> by ${esc(i.book.author)}</div>`; });
+        html += '</div>';
+      });
+      el.innerHTML = html;
+    } catch(err) {
+      el.innerHTML = '<div class="empty"><div class="empty-title">Failed to load</div><div class="empty-sub">Check your database connection</div></div>';
+    }
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['extract','search','browse'][i] === name));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'browse') renderBrowse();
+  }
+
+  function esc(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
