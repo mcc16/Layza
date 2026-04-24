@@ -7,58 +7,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #faf8f4;
-      --surface: #ffffff;
-      --border: #e8e2d9;
-      --border-strong: #c8bfb0;
-      --text: #1a1714;
-      --text-muted: #6b6460;
-      --text-faint: #9e9890;
-      --amber: #BA7517;
-      --amber-light: #fdf3e3;
-      --green: #2d6a2d;
-      --green-light: #eaf3ea;
-      --radius: 10px;
-      --radius-sm: 6px;
+      --bg: #faf8f4; --surface: #ffffff; --border: #e8e2d9; --border-strong: #c8bfb0;
+      --text: #1a1714; --text-muted: #6b6460; --text-faint: #9e9890;
+      --amber: #BA7517; --amber-light: #fdf3e3; --green: #2d6a2d; --green-light: #eaf3ea;
+      --radius: 10px; --radius-sm: 6px;
     }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── Layout ── */
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
     .app { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
-
-    /* ── Header ── */
     .header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
-    .logo { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; letter-spacing: -0.5px; color: var(--text); }
+    .logo { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; letter-spacing: -0.5px; }
     .logo em { font-style: italic; font-weight: 400; }
     .tagline { font-size: 12px; color: var(--text-faint); letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px; }
     .connected-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--green-light); color: var(--green); border: 1px solid #97c459; display: none; }
     .connected-badge.visible { display: inline-block; }
-
-    /* ── Config banner ── */
     .config-banner { background: var(--amber-light); border: 1px solid var(--amber); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
     .config-banner h3 { font-size: 13px; font-weight: 500; color: var(--amber); margin-bottom: 12px; }
     .config-banner input { width: 100%; padding: 9px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: #fff; color: var(--text); margin-bottom: 8px; }
     .config-banner input:focus { outline: none; border-color: var(--amber); }
     .config-btn { padding: 9px 20px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border: none; border-radius: var(--radius-sm); background: var(--text); color: #fff; cursor: pointer; }
-    .config-btn:hover { opacity: 0.85; }
-
-    /* ── Tabs ── */
     .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
     .tab { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 10px 22px; border: none; background: none; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
     .tab:hover { color: var(--text); }
     .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
     .panel { display: none; }
     .panel.active { display: block; }
-
-    /* ── Upload grid ── */
     .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1rem; }
     .upload-zone { border: 1.5px dashed var(--border-strong); border-radius: var(--radius); padding: 1.5rem 1rem; text-align: center; cursor: pointer; position: relative; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; background: var(--surface); }
     .upload-zone:hover { border-color: var(--amber); background: var(--amber-light); }
@@ -70,81 +43,53 @@
     .upload-preview { width: 100%; max-height: 160px; object-fit: contain; border-radius: var(--radius-sm); display: none; }
     .upload-preview.visible { display: block; }
     .upload-tick { position: absolute; top: 10px; right: 12px; color: var(--amber); font-size: 16px; }
-
-    /* ── Manual title ── */
     .manual-row { display: none; margin-bottom: 1rem; }
     .manual-row.visible { display: block; }
     .manual-row label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px; }
     .manual-row input { width: 100%; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
-    .manual-row input:focus { outline: none; border-color: var(--amber); }
-
-    /* ── Buttons ── */
     .extract-btn { width: 100%; padding: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; border: none; border-radius: var(--radius); background: var(--text); color: #fff; cursor: pointer; transition: opacity 0.2s; opacity: 0.3; pointer-events: none; margin-top: 1rem; }
     .extract-btn.ready { opacity: 1; pointer-events: all; }
     .extract-btn:hover { opacity: 0.85; }
     .save-btn { padding: 10px 24px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--text); color: #fff; cursor: pointer; }
-    .save-btn:hover { opacity: 0.85; }
     .search-btn { padding: 10px 24px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--text); color: #fff; cursor: pointer; }
-
-    /* ── Status ── */
     .status { margin-top: 1rem; font-size: 13px; color: var(--text-muted); text-align: center; min-height: 22px; }
     .hint { font-size: 12px; color: var(--text-faint); text-align: center; }
     .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--border-strong); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 5px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Results ── */
     .book-info-bar { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin: 1.5rem 0 1.25rem; display: flex; gap: 24px; flex-wrap: wrap; }
     .info-item { display: flex; flex-direction: column; gap: 2px; }
     .info-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-faint); }
     .info-value { font-size: 14px; font-weight: 500; }
     .info-value[contenteditable] { border-bottom: 1px dashed var(--border-strong); outline: none; cursor: text; min-width: 100px; }
-
     .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-faint); font-weight: 500; margin-bottom: 12px; }
-
     .blurb-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--amber); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 10px; }
     .blurb-quote { font-family: 'Playfair Display', serif; font-style: italic; font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 10px; }
     .blurb-name { font-size: 13px; font-weight: 500; color: var(--text); }
     .blurb-role { font-size: 12px; color: var(--text-muted); }
-
     .save-bar { margin-top: 1.5rem; display: flex; align-items: center; gap: 12px; }
     .save-note { font-size: 12px; color: var(--text-faint); }
-
     .warning-bar { font-size: 12px; color: var(--amber); margin-bottom: 1rem; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--amber); background: var(--amber-light); }
-
-    /* ── Search ── */
     .search-row { display: flex; gap: 10px; margin-bottom: 1.5rem; }
     .search-row input { flex: 1; padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
     .search-row input:focus { outline: none; border-color: var(--amber); }
-
     .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 12px; }
     .result-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
     .result-author { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
     .result-blurb { font-family: 'Playfair Display', serif; font-style: italic; font-size: 13px; line-height: 1.6; color: var(--text-muted); padding: 10px 14px; border-left: 2px solid var(--amber); background: var(--bg); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
-
-    /* ── Browse ── */
     .endorser-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 12px; }
     .endorser-name { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; }
     .badge { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); margin-left: 8px; vertical-align: middle; }
     .endorser-book { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
     .endorser-book strong { color: var(--text); font-weight: 500; }
-
     .db-count { font-size: 12px; color: var(--text-faint); margin-bottom: 1.5rem; }
-
-    /* ── Empty state ── */
     .empty { text-align: center; padding: 3rem 1rem; }
     .empty-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--text-muted); margin-bottom: 8px; }
     .empty-sub { font-size: 13px; color: var(--text-faint); }
-
-    @media (max-width: 500px) {
-      .upload-grid { grid-template-columns: 1fr; }
-      .tabs { overflow-x: auto; }
-      .tab { white-space: nowrap; padding: 10px 14px; }
-    }
+    @media (max-width: 500px) { .upload-grid { grid-template-columns: 1fr; } .tabs { overflow-x: auto; } .tab { white-space: nowrap; padding: 10px 14px; } }
   </style>
 </head>
 <body>
 <div class="app">
-
   <div class="header">
     <div>
       <div class="logo">Lay<em>za</em></div>
@@ -166,7 +111,6 @@
     <button class="tab" onclick="switchTab('browse')">Browse vault</button>
   </div>
 
-  <!-- EXTRACT -->
   <div class="panel active" id="tab-extract">
     <div class="upload-grid">
       <div class="upload-zone" id="frontZone">
@@ -198,7 +142,6 @@
     <div id="extractResults"></div>
   </div>
 
-  <!-- SEARCH -->
   <div class="panel" id="tab-search">
     <div class="search-row">
       <input type="text" id="searchInput" placeholder="Search by endorser name, e.g. James Patterson" onkeydown="if(event.key==='Enter')runSearch()" />
@@ -207,11 +150,9 @@
     <div id="searchResults"></div>
   </div>
 
-  <!-- BROWSE -->
   <div class="panel" id="tab-browse">
     <div id="browseContent"></div>
   </div>
-
 </div>
 
 <script>
@@ -309,9 +250,9 @@
     blocks.push({ type: "text", text: prompt });
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: blocks }] })
       });
       const data = await res.json();
@@ -362,18 +303,16 @@
       const books = await sbFetch('books?select=id,title', { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
       let bookId;
       const existing = books.find(b => b.title.toLowerCase() === finalTitle.toLowerCase());
-      if (existing) {
-        bookId = existing.id;
-      } else {
+      if (existing) { bookId = existing.id; }
+      else {
         const created = await sbFetch('books', { method: 'POST', body: JSON.stringify({ title: finalTitle, author: pendingParsed.bookAuthor }), prefer: 'return=representation' });
         bookId = created[0].id;
       }
       for (const blurb of pendingParsed.blurbs) {
         const endorsers = await sbFetch(`endorsers?name=eq.${encodeURIComponent(blurb.endorser)}&select=id`, { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
         let endorserId;
-        if (endorsers.length > 0) {
-          endorserId = endorsers[0].id;
-        } else {
+        if (endorsers.length > 0) { endorserId = endorsers[0].id; }
+        else {
           const created = await sbFetch('endorsers', { method: 'POST', body: JSON.stringify({ name: blurb.endorser, role: blurb.role || '' }), prefer: 'return=representation' });
           endorserId = created[0].id;
         }
@@ -391,7 +330,7 @@
     const query = document.getElementById('searchInput').value.trim();
     const el = document.getElementById('searchResults');
     if (!query) { el.innerHTML = ''; return; }
-    if (!SUPABASE_URL || !SUPABASE_KEY) { el.innerHTML = '<div class="empty"><div class="empty-title">Database not connected</div><div class="empty-sub">Enter your Supabase credentials above</div></div>'; return; }
+    if (!SUPABASE_URL || !SUPABASE_KEY) { el.innerHTML = '<div class="empty"><div class="empty-title">Database not connected</div></div>'; return; }
     el.innerHTML = '<div class="status"><span class="spinner"></span>Searching...</div>';
     try {
       const endorsers = await sbFetch(`endorsers?name=ilike.*${encodeURIComponent(query)}*&select=id,name,role`, { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
@@ -411,14 +350,13 @@
       });
       el.innerHTML = html;
     } catch(err) {
-      el.innerHTML = '<div class="empty"><div class="empty-title">Search failed</div><div class="empty-sub">Check your database connection</div></div>';
-      console.error(err);
+      el.innerHTML = '<div class="empty"><div class="empty-title">Search failed</div></div>';
     }
   }
 
   async function renderBrowse() {
     const el = document.getElementById('browseContent');
-    if (!SUPABASE_URL || !SUPABASE_KEY) { el.innerHTML = '<div class="empty"><div class="empty-title">Database not connected</div><div class="empty-sub">Enter your Supabase credentials to browse the vault</div></div>'; return; }
+    if (!SUPABASE_URL || !SUPABASE_KEY) { el.innerHTML = '<div class="empty"><div class="empty-title">Database not connected</div></div>'; return; }
     el.innerHTML = '<div class="status"><span class="spinner"></span>Loading vault...</div>';
     try {
       const blurbs = await sbFetch('blurbs?select=quote,book_id,endorser_id', { method: 'GET', headers: { 'Accept': 'application/json' }, prefer: 'return=representation' });
@@ -443,7 +381,7 @@
       });
       el.innerHTML = html;
     } catch(err) {
-      el.innerHTML = '<div class="empty"><div class="empty-title">Failed to load</div><div class="empty-sub">Check your database connection</div></div>';
+      el.innerHTML = '<div class="empty"><div class="empty-title">Failed to load</div></div>';
     }
   }
 
