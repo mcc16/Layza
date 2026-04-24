@@ -185,6 +185,28 @@
     return text ? JSON.parse(text) : [];
   }
 
+  // Resizes and compresses an image to stay under size limits
+  function compressImage(base64, mediaType) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+        resolve({ base64: compressed, mediaType: 'image/jpeg' });
+      };
+      img.src = `data:${mediaType};base64,${base64}`;
+    });
+  }
+
   function handleFile(e, side) {
     const file = e.target.files[0];
     if (!file) return;
@@ -224,38 +246,42 @@
     const btn = document.getElementById('extractBtn');
     const status = document.getElementById('statusBar');
     btn.disabled = true;
-    status.innerHTML = '<span class="spinner"></span>AI is reading the covers...';
+    status.innerHTML = '<span class="spinner"></span>Compressing and reading covers...';
 
     const manualTitle = document.getElementById('manualTitle').value.trim();
     const blocks = [];
 
-    if (uploads.front) {
-      blocks.push({ type: "text", text: "IMAGE 1 — Front cover:" });
-      blocks.push({ type: "image", source: { type: "base64", media_type: uploads.front.mediaType, data: uploads.front.base64 }});
-    }
-    if (uploads.back) {
-      blocks.push({ type: "text", text: uploads.front ? "IMAGE 2 — Back cover:" : "IMAGE 1 — Back cover only:" });
-      blocks.push({ type: "image", source: { type: "base64", media_type: uploads.back.mediaType, data: uploads.back.base64 }});
-    }
-
-    let prompt = `Analyse the provided book cover image(s) and extract all blurb endorsements.`;
-    if (uploads.front && uploads.back) prompt += ` First image is the front cover (title and author). Second image is the back cover (blurb quotes).`;
-    else if (uploads.back && !uploads.front) {
-      prompt += ` Only the back cover is provided.`;
-      prompt += manualTitle ? ` Book title provided manually: "${manualTitle}".` : ` Book title unknown — leave bookTitle empty.`;
-    } else {
-      prompt += ` Only the front cover is provided. Extract title, author, and any visible blurbs.`;
-    }
-    prompt += `\n\nRespond ONLY with JSON, no preamble, no markdown:\n{"bookTitle":"...","bookAuthor":"...","blurbs":[{"quote":"...","endorser":"...","role":"..."}]}`;
-    blocks.push({ type: "text", text: prompt });
-
     try {
+      if (uploads.front) {
+        const compressed = await compressImage(uploads.front.base64, uploads.front.mediaType);
+        blocks.push({ type: "text", text: "IMAGE 1 — Front cover:" });
+        blocks.push({ type: "image", source: { type: "base64", media_type: compressed.mediaType, data: compressed.base64 }});
+      }
+      if (uploads.back) {
+        const compressed = await compressImage(uploads.back.base64, uploads.back.mediaType);
+        blocks.push({ type: "text", text: uploads.front ? "IMAGE 2 — Back cover:" : "IMAGE 1 — Back cover only:" });
+        blocks.push({ type: "image", source: { type: "base64", media_type: compressed.mediaType, data: compressed.base64 }});
+      }
+
+      let prompt = `Analyse the provided book cover image(s) and extract all blurb endorsements.`;
+      if (uploads.front && uploads.back) prompt += ` First image is the front cover (title and author). Second image is the back cover (blurb quotes).`;
+      else if (uploads.back && !uploads.front) {
+        prompt += ` Only the back cover is provided.`;
+        prompt += manualTitle ? ` Book title provided manually: "${manualTitle}".` : ` Book title unknown — leave bookTitle empty.`;
+      } else {
+        prompt += ` Only the front cover is provided. Extract title, author, and any visible blurbs.`;
+      }
+      prompt += `\n\nRespond ONLY with JSON, no preamble, no markdown:\n{"bookTitle":"...","bookAuthor":"...","blurbs":[{"quote":"...","endorser":"...","role":"..."}]}`;
+      blocks.push({ type: "text", text: prompt });
+
       const res = await fetch('/api/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: blocks }] })
       });
+
       const data = await res.json();
+      if (data.error) throw new Error(data.error);
       const parsed = JSON.parse(data.content.map(c => c.text || '').join('').replace(/```json|```/g, '').trim());
       if (manualTitle && !parsed.bookTitle) parsed.bookTitle = manualTitle;
       pendingParsed = parsed;
